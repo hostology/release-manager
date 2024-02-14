@@ -4,5 +4,14 @@
     {
       "path": "C:\\Users\\bialy\\source\\test-repository"
     }
-  ]
+  ],
+  "jira": {
+    "url": "https://hostology-platform.atlassian.net/",
+    "username": "bialyrobert12@gmail.com",
+    "password": "ATATT3xFfGF0HlMFQwDqbg9Ehc-OIDyhMk86UsuwZNTCT923NGVVJv9xRtd0VWO5_eRPwGhGJ_7J7fGkXWzmUk_kB1NSIDNZlTtWxwFy6LyYTMnny7Ax7LvYD8dQ9vf7PvYCOGINJm03K4lKZBTW8j9OKCs0FgeaFuSQ0M0Rp8zXn6IAn5Ox2oA=4AB3E6AB",
+    "releasableLabels": [
+      "QA_PASSED",
+      "NOUAT"
+    ]
+  }
 }

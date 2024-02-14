@@ -44,7 +44,7 @@ public sealed partial class GitService : IGitService
 
         var filter = new CommitFilter
         {
-            SortBy = CommitSortStrategies.Topological | CommitSortStrategies.Time,
+            SortBy = CommitSortStrategies.Topological | CommitSortStrategies.Time | CommitSortStrategies.Reverse,
             IncludeReachableFrom = repository.Branches[branch].Tip,
             ExcludeReachableFrom = latestTagCommit
         };
@@ -62,15 +62,20 @@ public sealed partial class GitService : IGitService
             if (match.Success)
             {
                 var jiraTag = match.Value;
+                _logger.LogDebug($"Found commit with JIRA ticket {jiraTag}, Commit hash: {commit.Sha}");
                 commits.Add(new Models.Commit
                 {
                     JiraTicket = jiraTag,
-                    Sha = commit.Sha
+                    Sha = commit.Sha,
                 });
             }
             else
             {
-                throw new Exception($"Found commit with missing JIRA ticket. Commit hash: {commit.Sha}");
+                _logger.LogWarning($"Found commit with missing JIRA ticket. Commit hash: {commit.Sha}");
+                commits.Add(new Models.Commit
+                {
+                    Sha = commit.Sha
+                });
             }
         }
 
@@ -94,8 +99,8 @@ public sealed partial class GitService : IGitService
             .ToList();
     }
 
-    [GeneratedRegex("^uat/\\d+\\.\\d+\\.\\d+$")]
+    [GeneratedRegex(@"^uat/\d+\.\d+\.\d+$")]
     private static partial Regex GetReleaseTagPattern();
-    [GeneratedRegex("\\bHOS-\\d+\\b")]
+    [GeneratedRegex(@"\bHOS-\d+\b")]
     private static partial Regex GetJiraTagPattern();
 }
