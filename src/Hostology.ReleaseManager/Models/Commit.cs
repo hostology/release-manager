@@ -2,6 +2,6 @@
 
 public class Commit
 {
-    public string JiraTicket { get; set; }
-    public string Sha { get; set; }
+    public string? JiraTicket { get; init; }
+    public string Sha { get; init; }
 }

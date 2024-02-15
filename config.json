@@ -4,5 +4,14 @@
     {
       "path": "C:\\Users\\bialy\\source\\test-repository"
     }
-  ]
+  ],
+  "jira": {
+    "url": "https://hostology-platform.atlassian.net/",
+    "username": "bialyrobert12@gmail.com",
+    "password": "",
+    "releasableLabels": [
+      "QA_PASSED",
+      "NOUAT"
+    ]
+  }
 }

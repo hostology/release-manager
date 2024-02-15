@@ -15,12 +15,28 @@ You can find example of config file in the repository.
             {
                 "path": "C:\\Users\\someUser\\source\\test-repository"
             }
-        ]
+        ],
+        "jira": {
+            "url": "https://hostology-platform.atlassian.net/",
+            "username": "bialyrobert12@gmail.com",
+            "password": "",
+            "releasableLabels": [
+                "QA_PASSED",
+                "NOUAT"
+            ]
+        }
     }
 
 ### Parameters
+#### Repository
 - masterBranch - the main branch in your repository (eg. main/master/trunk)
 - repositories - a list of repositories you would like to release, with their absolute paths
+
+#### Jira
+- url - Jira instance uri
+- username - User email
+- password - user assigned token. You can read more about it [here](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
+- releasableLabels - if Jira issue has one of those, it considers issue as releasable
 
 ## Usage
 You can use an application by simply calling it in your terminal.
