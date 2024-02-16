@@ -12,6 +12,25 @@
     "releasableLabels": [
       "QA_PASSED",
       "NOUAT"
-    ]
+    ],
+    "project": {
+      "id": "HT",
+      "failedMessageTemplate": "Hello <@U05HAH34PS7>!\n\nHere's a list of failed issues in Jira.\n\n{0}",
+      "incorrectIssueTemplate": "Issue {0} has status {1} with label {2}.",
+      "missingLabelsTemplate": "Issue {0} has status and no labels.",
+      "rules": [
+        {
+          "status": "DEV TEST",
+          "labels": [
+            "QA_PASSED",
+            "NOUAT"
+          ]
+        }
+      ]
+    }
+  },
+  "slack": {
+    "channel": "jira-test",
+    "token": ""
   }
 }
