@@ -43,13 +43,25 @@ You can find example of config file in the repository.
         "slack": {
             "channel": "jira-test",
             "token": ""
+        },
+        "git": {
+            "masterBranch": "master",
+            "incrementVersionMessageTemplate": "Updated package.json version to {0}",
+            "email": "",
+            "token": "",
+            "remote": "origin",
+            "uatVersionPrefix": "uat/"
         }
     }
 
 ### Parameters
-#### Repository
+#### Git
 - masterBranch - the main branch in your repository (eg. main/master/trunk)
 - repositories - a list of repositories you would like to release, with their absolute paths
+- email - an email used to authenticate to repository
+- token - password or token used for validation
+- remote - remote server name, default: origin
+- uatVersionPrefix - prefix for uat
 
 #### Jira
 - url - Jira instance uri
@@ -92,3 +104,11 @@ There are two options for application to be feed with configuration.
 Use `-n` or `--no-slack` to prevent command line from sending validation message to slack.
 
     ./Hostology.ReleaseManager.exe --no-slack
+
+Use `-s` or `--skip-validation` to skip project validation.
+
+    ./Hostology.ReleaseManager.exe --skip-validation
+
+Use `-d` or `--dry-run` to prevent command line from releasing found commits.
+
+    ./Hostology.ReleaseManager.exe --dry-run

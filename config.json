@@ -1,5 +1,4 @@
 {
-  "masterBranch": "master",
   "repositories": [
     {
       "path": "C:\\Users\\bialy\\source\\test-repository"
@@ -7,7 +6,7 @@
   ],
   "jira": {
     "url": "https://hostology-platform.atlassian.net/",
-    "username": "bialyrobert12@gmail.com",
+    "username": "",
     "password": "",
     "releasableLabels": [
       "QA_PASSED",
@@ -32,5 +31,13 @@
   "slack": {
     "channel": "jira-test",
     "token": ""
+  },
+  "git": {
+    "masterBranch": "master",
+    "incrementVersionMessageTemplate": "Updated package.json version to {0}",
+    "email": "",
+    "token": "",
+    "remote": "origin",
+    "uatVersionPrefix": "uat/"
   }
 }

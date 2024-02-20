@@ -6,7 +6,7 @@ namespace Hostology.ReleaseManager.Services;
 
 public interface IReleaseManager
 {
-    Task Handle(string? configurationPath, bool noSlack);
+    Task Handle(string? configurationPath, bool noSlack, bool skipValidation, bool dryRun);
 }
 
 public sealed class ReleaseManager : IReleaseManager
@@ -28,17 +28,23 @@ public sealed class ReleaseManager : IReleaseManager
         _projectValidator = projectValidator ?? throw new ArgumentNullException(nameof(projectValidator));
     }
 
-    public async Task Handle(string? configurationPath, bool noSlack)
+    public async Task Handle(string? configurationPath, bool noSlack, bool skipValidation, bool dryRun)
     {
         try
         {
+            var cliConfiguration = new CLIConfiguration
+            {
+                NoSlack = noSlack,
+                SkipValidation = skipValidation,
+                DryRun = dryRun,
+            };
             var configuration = _configurationProvider.Get(configurationPath);
-            await _projectValidator.ValidateJiraTasks(configuration, !noSlack);
+            if(!cliConfiguration.SkipValidation) await _projectValidator.ValidateJiraTasks(configuration, !cliConfiguration.NoSlack);
 
             foreach (var repository in configuration.Repositories)
             {
                 _logger.LogInformation("Handling repository at {Path}", repository.Path);
-                await _repositoryHandler.HandleRepositoryRelease(repository, configuration);
+                await _repositoryHandler.HandleRepositoryRelease(repository, configuration, cliConfiguration);
             }
         }
         catch (Exception ex)

@@ -1,13 +1,16 @@
 ﻿using Hostology.ReleaseManager.Configuration;
-using Hostology.ReleaseManager.Models;
 using Microsoft.Extensions.Logging;
+using Commit = Hostology.ReleaseManager.Models.Commit;
 using ReleaseManagerConfiguration = Hostology.ReleaseManager.Configuration.Configuration;
 
 namespace Hostology.ReleaseManager.Services;
 
 public interface IRepositoryHandler
 {
-    Task HandleRepositoryRelease(RepositoryConfiguration repository, ReleaseManagerConfiguration configuration);
+    Task HandleRepositoryRelease(
+        RepositoryConfiguration repository, 
+        ReleaseManagerConfiguration configuration,
+        CLIConfiguration cliConfiguration);
 }
 
 public sealed class RepositoryHandler : IRepositoryHandler
@@ -15,24 +18,28 @@ public sealed class RepositoryHandler : IRepositoryHandler
     private readonly IGitService _gitService;
     private readonly IJiraService _jiraService;
     private readonly ILogger<RepositoryHandler> _logger;
+    private readonly IRepositoryReleaseService _repositoryReleaseService;
 
     public RepositoryHandler(
         IGitService gitService, 
         ILogger<RepositoryHandler> logger,
-        IJiraService jiraService)
+        IJiraService jiraService,
+        IRepositoryReleaseService repositoryReleaseService)
     {
         _gitService = gitService ?? throw new ArgumentNullException(nameof(gitService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _jiraService = jiraService ?? throw new ArgumentNullException(nameof(jiraService));
+        _repositoryReleaseService = repositoryReleaseService ?? throw new ArgumentNullException(nameof(repositoryReleaseService));
     }
 
-    public async Task HandleRepositoryRelease(RepositoryConfiguration repository, ReleaseManagerConfiguration configuration)
+    public async Task HandleRepositoryRelease(RepositoryConfiguration repository,
+        ReleaseManagerConfiguration configuration, CLIConfiguration cliConfiguration)
     {
-        var commits = _gitService
-            .GetUnreleasedCommits(repository.Path, configuration.MasterBranch);
+        var unreleasedCommits = _gitService
+            .GetUnreleasedCommits(repository.Path, configuration.Git.MasterBranch, configuration.Jira.Project.Id, configuration.Git.UatVersionPrefix);
 
-        var lastReleasableCommit = await GetLastReleasableCommit(commits, configuration);
-        if (lastReleasableCommit is null)
+        var lastReleasableCommit = await GetLastReleasableCommit(unreleasedCommits, configuration);
+        if (lastReleasableCommit.Commit is null)
         {
             _logger.LogInformation("No new commits to release.");
             return;
@@ -40,11 +47,24 @@ public sealed class RepositoryHandler : IRepositoryHandler
         
         _logger.LogInformation(
             "New release candidate found task: {JiraTicket}, sha: {Sha}.", 
-            lastReleasableCommit.JiraTicket, 
-            lastReleasableCommit.Sha);
+            lastReleasableCommit.Commit.JiraTicket, 
+            lastReleasableCommit.Commit.Sha);
+
+        if (!cliConfiguration.DryRun)
+        {
+            await _repositoryReleaseService.ReleaseNewVersion(
+                repository, 
+                configuration, 
+                lastReleasableCommit.Commit, 
+                lastReleasableCommit.IsLastCommit);
+        }
+        else
+        {
+            _logger.LogInformation("Dry run: commits won't be released.");
+        }
     }
 
-    private async Task<Commit?> GetLastReleasableCommit(List<Commit> commits, ReleaseManagerConfiguration configuration)
+    private async Task<(Commit? Commit, bool IsLastCommit)> GetLastReleasableCommit(List<Commit> commits, ReleaseManagerConfiguration configuration)
     {
         Commit? lastReleasableCommit = null;
         foreach (var commit in commits)
@@ -62,11 +82,11 @@ public sealed class RepositoryHandler : IRepositoryHandler
                     ? $"Commit with ticket {commit.JiraTicket} can be released." 
                     : $"Commit with ticket {commit.JiraTicket} can't be released.");
                 
-                if (!releasable) return lastReleasableCommit;
+                if (!releasable) return (lastReleasableCommit, false);
                 lastReleasableCommit = commit;
             }
         }
 
-        return lastReleasableCommit;
+        return (lastReleasableCommit, true);
     }
 }
