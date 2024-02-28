@@ -398,4 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 # local config file
-src/Hostology.ReleaseManager/config.json
+src/Hostology.ReleaseManager/*.config.json
