@@ -3,6 +3,7 @@ using Hostology.ReleaseManager.Clients;
 using Hostology.ReleaseManager.Configuration;
 using Hostology.ReleaseManager.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 var builder = CoconaApp.CreateBuilder();
 builder.Services.AddTransient<IConfigurationProvider, ConfigurationProvider>();
@@ -15,6 +16,12 @@ builder.Services.AddTransient<IRepositoryService, RepositoryService>();
 builder.Services.AddTransient<IProjectValidator, ProjectValidator>();
 builder.Services.AddTransient<IRepositoryHandler, RepositoryHandler>();
 builder.Services.AddTransient<IReleaseManager, ReleaseManager>();
+builder.Services.AddLogging(logging =>
+    logging.AddSimpleConsole(options =>
+    {
+        options.SingleLine = true;
+    })
+);
 
 var app = builder.Build();
 

@@ -5,11 +5,13 @@ using LibGit2Sharp.Handlers;
 using Microsoft.Extensions.Logging;
 using Version = System.Version;
 using ReleaseCommit = Hostology.ReleaseManager.Models.Commit;
+using System.IO;
 
 namespace Hostology.ReleaseManager.Services;
 
 public interface IGitService
 {
+    void UpdateLocalRepo(string path, GitConfiguration gitConfiguration);
     List<ReleaseCommit> GetUnreleasedCommits(
         string path,
         string masterBranch, 
@@ -34,6 +36,30 @@ public sealed partial class GitService : IGitService
     public GitService(ILogger<GitService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public void UpdateLocalRepo(string path, GitConfiguration gitConfiguration)
+    {
+        using var repository = new Repository(path);
+
+        var signature = new Signature(gitConfiguration.Name, gitConfiguration.Email, DateTimeOffset.Now);
+
+        Commands.Checkout(repository, repository.Branches[gitConfiguration.MasterBranch]);
+
+        Commands.Pull(repository, signature, new PullOptions
+        {
+            FetchOptions = new FetchOptions
+            {
+                TagFetchMode = TagFetchMode.All,
+                CredentialsProvider = (url, fromUrl, types) => GetCredentialsHandler(gitConfiguration)
+            }
+        });
+
+        Commands.Fetch(repository, "origin", new string[] {}, new FetchOptions
+        { 
+            TagFetchMode = TagFetchMode.All,
+            CredentialsProvider = (url, fromUrl, types) => GetCredentialsHandler(gitConfiguration)
+        }, null);
     }
 
     public List<ReleaseCommit> GetUnreleasedCommits(
@@ -63,7 +89,7 @@ public sealed partial class GitService : IGitService
     public Commit StageAndCommitChanges(string path, string message, GitConfiguration gitConfiguration)
     {
         using var repository = new Repository(path);
-        var signature = new Signature("Robert", gitConfiguration.Email, DateTimeOffset.Now);
+        var signature = new Signature(gitConfiguration.Name, gitConfiguration.Email, DateTimeOffset.Now);
         Commands.Stage(repository, "package.json");
         var commit = repository.Commit(message, signature, signature, new CommitOptions
         {
@@ -150,6 +176,7 @@ public sealed partial class GitService : IGitService
     private List<Models.Commit> GetCommitsSinceLastUATTag(IRepository repository, Commit latestTagCommit, string branch, string jiraTaskId)
     {
         var jiraTagPattern = new Regex($@"\b{jiraTaskId}-\d+\b");
+        var versionPatternMatch = new Regex(@"\bversion\b");
 
         var filter = new CommitFilter
         {
@@ -168,19 +195,24 @@ public sealed partial class GitService : IGitService
         foreach (var commit in commitLog)
         {
             var match = jiraTagPattern.Match(commit.Message);
+            var versionMatch = versionPatternMatch.Match(commit.Message);
             if (match.Success)
             {
                 var jiraTag = match.Value;
-                _logger.LogDebug($"Found commit with JIRA ticket {jiraTag}, Commit hash: {commit.Sha}");
+                _logger.LogDebug($"({repository.Info.Path}): Found commit with JIRA ticket {jiraTag}, Commit hash: {commit.Sha}");
                 commits.Add(new ReleaseCommit
                 {
                     JiraTicket = jiraTag,
                     Sha = commit.Sha,
                 });
             }
+            else if (versionMatch.Success)
+            {
+                _logger.LogDebug($"({repository.Info.Path}): Found commit with version update {versionMatch}, Commit hash: {commit.Sha}");
+            }
             else
             {
-                _logger.LogWarning($"Found commit with missing JIRA ticket. Commit hash: {commit.Sha}");
+                _logger.LogWarning($"({repository.Info.Path}): Found commit with missing JIRA ticket. Commit hash: {commit.Sha}");
                 commits.Add(new ReleaseCommit
                 {
                     Sha = commit.Sha

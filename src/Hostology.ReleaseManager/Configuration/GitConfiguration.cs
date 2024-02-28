@@ -4,6 +4,7 @@ public class GitConfiguration
 {
     public string MasterBranch { get; init; }
     public string IncrementVersionMessageTemplate { get; init; }
+    public string Name { get; set; }
     public string Email { get; init; }
     public string Token { get; init; }
     public string Remote { get; init; }

@@ -35,8 +35,14 @@ public sealed class RepositoryHandler : IRepositoryHandler
     public async Task HandleRepositoryRelease(RepositoryConfiguration repository,
         ReleaseManagerConfiguration configuration, CLIConfiguration cliConfiguration)
     {
+        Console.WriteLine();
+        Console.WriteLine($"Handling repository {repository.Path}");
+        Console.WriteLine("=============================================================");
+
         var unreleasedCommits = _gitService
             .GetUnreleasedCommits(repository.Path, configuration.Git.MasterBranch, configuration.Jira.Project.Id, configuration.Git.UatVersionPrefix);
+
+        _gitService.UpdateLocalRepo(repository.Path, configuration.Git);
 
         var lastReleasableCommit = await GetLastReleasableCommit(unreleasedCommits, configuration);
         if (lastReleasableCommit.Commit is null)
