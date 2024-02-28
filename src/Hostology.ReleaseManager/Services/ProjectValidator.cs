@@ -63,10 +63,10 @@ public class ProjectValidator : IProjectValidator
                 throw new Exception($"Unable to find Jira rules for {issue.Status}. Please check configuration.");
 
             var rules = labelsForStatus.SingleOrDefault(c => c.Status.Equals(issue.Status, StringComparison.InvariantCultureIgnoreCase));
-            var hasIncorrectLabels = issue
+            var hasCorrectLabel = issue
                 .Labels
-                .All(label => rules.Labels.Any(ac => ac.Equals(label)));
-            if (hasIncorrectLabels)
+                .Any(label => rules.Labels.Any(ac => ac.Equals(label)));
+            if (!hasCorrectLabel)
             {
                 _logger.LogDebug("Found issue {IssueId} with incorrect labels", issue.Id);
                 incorrectIssues.Add(issue);
@@ -82,8 +82,8 @@ public class ProjectValidator : IProjectValidator
         foreach (var issue in issues)
         {
             var message = issue.Labels.Any()
-                ? string.Format(configuration.Project.IncorrectIssueTemplate, issue.Id, issue.Status, string.Join(',', issue.Labels))
-                : string.Format(configuration.Project.MissingLabelsTemplate, issue.Id, issue.Status);
+                ? string.Format(configuration.Project.IncorrectIssueTemplate, configuration.Url, issue.Id, issue.Status, string.Join(',', issue.Labels))
+                : string.Format(configuration.Project.MissingLabelsTemplate, configuration.Url, issue.Id, issue.Status);
             issuesMessage.AppendLine(message);
         }
 
